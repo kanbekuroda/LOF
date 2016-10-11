@@ -10,13 +10,15 @@ LOF <- function(data, k) {
     knns <- knn(data, k = NROW(data))
 
     lrds <- numeric(NROW(data))
+    knnIndsList <- vector("list", NROW(data))
+
     for (i in 1:NROW(data)) {
 	# Count the number of k-th nearest neighbor
 	numneigh <- sum(knns$nn.dists[i, -1] <= knns$nn.dist[i, k + 1])
 	# knn's k-nearest neighbors
-	knnInds <- knns$nn.idx[i, 1:numneigh + 1]  
+	knnIndsList[[i]] <- knns$nn.idx[i, 1:numneigh + 1]  
 	# rbind("k-dist", "dist")
-	tmp <- rbind(knns$nn.dist[knnInds, k + 1], knns$nn.dists[i, 1:numneigh + 1])
+	tmp <- rbind(knns$nn.dists[knnIndsList[[i]], k + 1], knns$nn.dists[i, 1:numneigh + 1])
 	# Calculate "Reachability Distance"
 	reachDists <- apply(tmp, 2, max)
 	lrds[i] <- 1 / (sum(reachDists) / numneigh)
@@ -24,11 +26,7 @@ LOF <- function(data, k) {
 
     lofs <- numeric(NROW(data))
     for (i in 1:NROW(data)) {
-	# Count the number of k-th nearest neighbor
-	numneigh <- sum(knns$nn.dists[i, -1] <= knns$nn.dist[i, k + 1])
-	# knn's k-nearest neighbors
-	knnInds <- knns$nn.idx[i, 1:numneigh + 1]  
-	lofs[i] <- sum(lrds[knnInds] / lrds[i]) / numneigh
+	lofs[i] <- sum(lrds[knnIndsList[[i]]] / lrds[i]) / length(knnIndsList[[i]])
     }
 
     return(lofs)
